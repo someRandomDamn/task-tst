@@ -6,6 +6,8 @@
 - run docker-compose file
 - check container stdout to see fetching results
 
+P.S. currently first slot is chosen for the same NFT as in the task Ebexf7yXPsuPw2BEzbraPWZbLPDaBovaZ9zdZQ8DGg4c
+
 ## Mistake in the task description
 
 In task example, there seems to be a mistake.
@@ -28,7 +30,7 @@ the rage of slot transactions (see code). Transaction signatures that matched Me
 Master edition account creation. Then we get fetch parsed versions of such transactions and identify NFT creation and
 its Metaplex object.
 
-### my thoughts on alternative solution (faster)
+### My thoughts on alternative solution (faster)
 
 Above was done, because it was required in the task to fetch by block. In my opinion we could make it working much
 faster by just fetching all neccessary transaction signatures directly from Metaplex account
