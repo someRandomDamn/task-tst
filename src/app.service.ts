@@ -1,9 +1,10 @@
-import { PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
+import { Metaplex } from "@metaplex-foundation/js";
+import { Metadata, PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
 import type { OnApplicationBootstrap } from "@nestjs/common";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { BlockSignatures, ParsedInstruction, PartiallyDecodedInstruction } from "@solana/web3.js";
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 const enum config {
   RPC_URL = "RPC_URL",
@@ -13,9 +14,11 @@ const enum config {
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
   private readonly solanaApi: Connection;
+  private readonly mx: Metaplex;
 
   constructor(private configService: ConfigService) {
     this.solanaApi = new Connection(this.configService.get(config.RPC_URL), "confirmed");
+    this.mx = Metaplex.make(this.solanaApi);
   }
 
   async onApplicationBootstrap() {
@@ -91,7 +94,25 @@ export class AppService implements OnApplicationBootstrap {
       }, response);
     }
 
-    return response;
+    return Promise.all(
+      response.map(async nftMeta =>
+        Metadata.fromAccountAddress(this.solanaApi, nftMeta.metadataAccount)
+          .then(res => res.pretty())
+          // we just remove \u0000 from the string, so it more human-readable
+          // should be removed if real data needs to be displayed
+          .then(res => {
+            return {
+              ...res,
+              data: {
+                ...res.data,
+                name: res.data.name.replace(/\0/g, ""),
+                symbol: res.data.symbol.replace(/\0/g, ""),
+                uri: res.data.uri.replace(/\0/g, ""),
+              },
+            };
+          }),
+      ),
+    );
   }
 
   private async getBlockSignatures(slotNumber: number): Promise<BlockSignatures> {
